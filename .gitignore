@@ -1,0 +1,6 @@
+.env
+*.bak
+*.log
+logs/
+tests/tmp/
+node_modules/
