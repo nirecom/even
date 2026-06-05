@@ -29,7 +29,11 @@ if ((Test-Path $ConfigPath) -and -not $Force) {
         Write-Error "even-terminal not found in PATH. Install: npm install -g @evenrealities/even-terminal"
         exit 1
     }
-    $exePath = $cmd.Source
+    # Get-Command may return a session-temporary fnm multishell shim.
+    # Resolve the permanent path via the npm global prefix instead.
+    $npmPrefix = (& npm prefix -g 2>$null).Trim()
+    $realExe = if ($npmPrefix) { Join-Path $npmPrefix 'even-terminal.ps1' } else { $null }
+    $exePath = if ($realExe -and (Test-Path $realExe)) { $realExe } else { $cmd.Source }
 
     $bytes = New-Object byte[] 32
     [System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
