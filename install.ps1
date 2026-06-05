@@ -29,16 +29,22 @@ if ((Test-Path $ConfigPath) -and -not $Force) {
         Write-Error "even-terminal not found in PATH. Install: npm install -g @evenrealities/even-terminal"
         exit 1
     }
-    # Get-Command and npm prefix -g both return the fnm multishell shim dir,
-    # which is a session-temporary path that does not exist at Task Scheduler launch.
-    # Resolve the permanent path via fnm's node-versions directory instead.
-    $exePath = $cmd.Source
-    $fnmExe = Join-Path $env:LOCALAPPDATA 'fnm\fnm.exe'
-    if (Test-Path $fnmExe) {
-        $ver = (& $fnmExe current 2>$null).Trim()
+    # Get-Command returns the fnm multishell shim — a session-temporary path absent
+    # under Task Scheduler. Resolve node.exe and cli.js directly from fnm's permanent
+    # node-versions directory so the stored paths survive session restarts.
+    $exePath     = $cmd.Source
+    $exeArgsList = @()
+    $fnmDataDir  = if ($env:FNM_DIR) { $env:FNM_DIR } else { Join-Path $env:APPDATA 'fnm' }
+    $fnmBin      = Get-Command fnm -ErrorAction SilentlyContinue
+    if ($fnmBin) {
+        $ver = (& $fnmBin.Source current 2>$null).Trim()
         if ($ver -and $ver -ne 'none') {
-            $candidate = Join-Path $env:LOCALAPPDATA "fnm\node-versions\$ver\installation\even-terminal.ps1"
-            if (Test-Path $candidate) { $exePath = $candidate }
+            $nodeExe = Join-Path $fnmDataDir "node-versions\$ver\installation\node.exe"
+            $cliJs   = Join-Path $fnmDataDir "node-versions\$ver\installation\node_modules\@evenrealities\even-terminal\bin\cli.js"
+            if ((Test-Path $nodeExe) -and (Test-Path $cliJs)) {
+                $exePath     = $nodeExe
+                $exeArgsList = @($cliJs)
+            }
         }
     }
 
@@ -49,7 +55,7 @@ if ((Test-Path $ConfigPath) -and -not $Force) {
     $cfgData = [ordered]@{
         version         = 1
         executable      = $exePath
-        executable_args = @()
+        executable_args = $exeArgsList
         token           = $cfgToken
         port            = $Port
         provider        = 'claude'
