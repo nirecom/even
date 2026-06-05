@@ -7,3 +7,7 @@
 - `install` / `uninstall` scripts symmetric across Windows (`.ps1`) and POSIX (`.sh`) with `--port`, `--network-mode`, `--force`, `--dry-run` flags.
 - Auto network detection: prefers Tailscale, falls back to primary LAN interface, re-evaluated at each start.
 - Connect URL printed after install for pasting into Even Hub.
+
+### FEATURE: PR #3 (2026-06-06)
+Background: fix: resolve fnm multishell shim path for Task Scheduler
+Changes: Fixed Windows startup failure when Node is managed by fnm: `install.ps1` now stores the permanent npm global path instead of the session-temporary fnm multishell shim, and `start.ps1` initializes fnm before launch so the Task Scheduler service can find `even-terminal`.
