@@ -30,7 +30,7 @@ Symmetric mirror keeps each script idiomatic in its own language while preservin
 
 TCP alone has too many false positives — any process holding the port would suppress restart. The HTTP step filters out non-HTTP listeners. The acceptable-status set tolerates routing changes inside even-terminal (auth-required endpoints return 401, missing routes return 404; both are valid "HTTP server is alive" signals).
 
-The probe can still match an unrelated HTTP server on the same port. The trade-off is acceptable because a port conflict is a user-visible misconfiguration that surfaces in install logs ("server did not start within 15s") and the start-script skip message.
+The probe can still match an unrelated HTTP server on the same port. The trade-off is acceptable because a port conflict is a user-visible misconfiguration that surfaces in install logs (warning: "server did not start within 30s") and the start-script skip message. On Windows, the probe timeout is non-fatal — Task Scheduler registration is the primary success condition; the Connect URL is still printed so the user can verify connectivity independently.
 
 ## Tailscale vs LAN: `--tailscale` flag vs `--interface`
 
