@@ -4,3 +4,5 @@
 logs/
 tests/tmp/
 node_modules/
+
+.migration-state.json
