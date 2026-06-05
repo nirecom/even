@@ -1,16 +1,6 @@
 #Requires -Version 5.1
 $ErrorActionPreference = 'Stop'
 
-# Task Scheduler starts with a minimal PATH that excludes fnm shims.
-# Initialize fnm so node/even-terminal are resolvable.
-$fnmExe = Join-Path $env:LOCALAPPDATA 'fnm\fnm.exe'
-if (Test-Path $fnmExe) {
-    try {
-        $fnmEnv = & $fnmExe env --shell powershell 2>$null
-        if ($fnmEnv) { Invoke-Expression ($fnmEnv -join "`n") }
-    } catch { }
-}
-
 . "$PSScriptRoot\lib\detect-network.ps1"
 . "$PSScriptRoot\lib\probe-server.ps1"
 
@@ -34,12 +24,8 @@ if (Test-EvenTerminalRunning -Port $config.port) {
 
 $exePath = $config.executable
 if (-not (Test-Path $exePath)) {
-    # Stored path may be a stale fnm multishell shim. Try re-resolving after fnm init.
-    $resolved = Get-Command even-terminal -ErrorAction SilentlyContinue
-    if ($resolved) { $exePath = $resolved.Source } else {
-        Write-Error "Executable not found: $exePath. Re-run install.ps1."
-        exit 1
-    }
+    Write-Error "Executable not found: $exePath. Re-run install.ps1 to regenerate config."
+    exit 1
 }
 
 $net = Get-NetworkArgs -Mode $config.network_mode
@@ -47,14 +33,14 @@ $net = Get-NetworkArgs -Mode $config.network_mode
 $env:BRIDGE_TOKEN = $config.token
 $env:PORT = $config.port
 
-$exeArgs = @('--provider', $config.provider, '--port', $config.port)
+# Prepend executable_args (e.g. cli.js path) before the even-terminal flags.
+$exeArgs = @()
+if ($config.executable_args) { $exeArgs += $config.executable_args }
+$exeArgs += @('--provider', $config.provider, '--port', $config.port)
 if ($net.mode -eq 'tailscale') {
     $exeArgs += '--tailscale'
 } elseif ($net.mode -eq 'interface') {
     $exeArgs += @('--interface', $net.arg)
-}
-if ($config.executable_args) {
-    $exeArgs += $config.executable_args
 }
 
 $logDir = Join-Path $ConfigDir 'logs'

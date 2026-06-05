@@ -57,7 +57,8 @@ After install, the persistent config lives at `~/.config/even-terminal/config.js
 
 | Field | Meaning |
 |---|---|
-| `executable` | Absolute path to `even-terminal` resolved at install time. |
+| `executable` | Absolute path to the Node.js executable resolved at install time. |
+| `executable_args` | Arguments prepended before even-terminal flags (e.g. path to `cli.js`). Empty on non-fnm installs. |
 | `token` | URL-safe bridge token (kept secret). |
 | `port` | TCP port the server listens on. |
 | `provider` | Always `claude`. |
@@ -86,7 +87,7 @@ A `.bak` of the previous config is left next to the removed file.
 
 ## Troubleshooting
 
-- **`even-terminal not found`**: confirm `npm install -g @evenrealities/even-terminal` succeeded and that the npm global bin is on `PATH`. On Windows with fnm, `install.ps1` auto-resolves the permanent path via `npm prefix -g` and `start.ps1` initializes fnm at launch — no manual shim setup needed. On macOS/Linux with nvm, set a `default` Node version so the launchd/systemd service can find it.
+- **`even-terminal not found`**: confirm `npm install -g @evenrealities/even-terminal` succeeded and that the npm global bin is on `PATH`. On Windows with fnm, `install.ps1` resolves `node.exe` and `cli.js` directly from fnm's permanent `node-versions` directory and stores them in `config.json` — Task Scheduler launches without needing fnm shims on `PATH`. On macOS/Linux with nvm, set a `default` Node version so the launchd/systemd service can find it.
 - **launchd cannot find Node**: launchd starts with a minimal `PATH`. The install script writes an `EnvironmentVariables` block, but if your `even-terminal` is under fnm/nvm, you may need to use a shim or wrap the launchd `ProgramArguments` accordingly.
 - **systemd service stops at logoff**: enable lingering with `sudo loginctl enable-linger $USER`.
 - **Port already in use**: the start script detects an HTTP server on the configured port and skips startup. Edit `config.json` to use a different port, then restart the service.
