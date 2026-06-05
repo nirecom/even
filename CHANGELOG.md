@@ -11,3 +11,7 @@
 ### FEATURE: PR #3 (2026-06-06)
 Background: fix: resolve fnm multishell shim path for Task Scheduler
 Changes: Fixed Windows startup failure when Node is managed by fnm: `install.ps1` now stores the permanent npm global path instead of the session-temporary fnm multishell shim, and `start.ps1` initializes fnm before launch so the Task Scheduler service can find `even-terminal`.
+
+### FEATURE: PR #5 (2026-06-06)
+Background: fix: store node.exe+cli.js paths directly to survive Task Scheduler context
+Changes: Fixed: even-terminal now starts reliably at login on Windows — the installer stores the permanent node.exe path instead of a session-temporary fnm shim, so Task Scheduler can launch it without fnm on PATH
