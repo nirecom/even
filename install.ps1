@@ -29,11 +29,18 @@ if ((Test-Path $ConfigPath) -and -not $Force) {
         Write-Error "even-terminal not found in PATH. Install: npm install -g @evenrealities/even-terminal"
         exit 1
     }
-    # Get-Command may return a session-temporary fnm multishell shim.
-    # Resolve the permanent path via the npm global prefix instead.
-    $npmPrefix = (& npm prefix -g 2>$null).Trim()
-    $realExe = if ($npmPrefix) { Join-Path $npmPrefix 'even-terminal.ps1' } else { $null }
-    $exePath = if ($realExe -and (Test-Path $realExe)) { $realExe } else { $cmd.Source }
+    # Get-Command and npm prefix -g both return the fnm multishell shim dir,
+    # which is a session-temporary path that does not exist at Task Scheduler launch.
+    # Resolve the permanent path via fnm's node-versions directory instead.
+    $exePath = $cmd.Source
+    $fnmExe = Join-Path $env:LOCALAPPDATA 'fnm\fnm.exe'
+    if (Test-Path $fnmExe) {
+        $ver = (& $fnmExe current 2>$null).Trim()
+        if ($ver -and $ver -ne 'none') {
+            $candidate = Join-Path $env:LOCALAPPDATA "fnm\node-versions\$ver\installation\even-terminal.ps1"
+            if (Test-Path $candidate) { $exePath = $candidate }
+        }
+    }
 
     $bytes = New-Object byte[] 32
     [System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
