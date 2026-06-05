@@ -86,7 +86,7 @@ A `.bak` of the previous config is left next to the removed file.
 
 ## Troubleshooting
 
-- **`even-terminal not found`**: confirm `npm install -g @evenrealities/even-terminal` succeeded and that the npm global bin is on `PATH`. With fnm or nvm, set a `default` Node version so service-context PATH includes the shim.
+- **`even-terminal not found`**: confirm `npm install -g @evenrealities/even-terminal` succeeded and that the npm global bin is on `PATH`. On Windows with fnm, `install.ps1` auto-resolves the permanent path via `npm prefix -g` and `start.ps1` initializes fnm at launch — no manual shim setup needed. On macOS/Linux with nvm, set a `default` Node version so the launchd/systemd service can find it.
 - **launchd cannot find Node**: launchd starts with a minimal `PATH`. The install script writes an `EnvironmentVariables` block, but if your `even-terminal` is under fnm/nvm, you may need to use a shim or wrap the launchd `ProgramArguments` accordingly.
 - **systemd service stops at logoff**: enable lingering with `sudo loginctl enable-linger $USER`.
 - **Port already in use**: the start script detects an HTTP server on the configured port and skips startup. Edit `config.json` to use a different port, then restart the service.
