@@ -23,3 +23,7 @@ Changes: Fixed: `install.ps1 -Force` no longer exits with "Server did not start 
 ### BUGFIX: PR #9 (2026-06-06)
 Background: fix: probe all candidate IPv4 addresses to fix VPN-caused timeout (#8)
 Changes: Fixed: `install.ps1 -Force` no longer shows "WARNING: Server did not start within 30s" when a VPN (NordVPN, etc.) is active. The probe now checks all local IPv4 addresses — `127.0.0.1` plus any VPN/LAN interfaces — so even-terminal is found regardless of which network interface it binds to.
+
+### FEATURE: PR #11 (2026-06-07)
+Background: fix: detect server via LISTEN-state to handle any NIC/VPN binding
+Changes: Fixed: `install.ps1 -Force` no longer reports "Server did not start within 30s" when `even-terminal` is bound to a VPN IP (NordVPN Meshnet, WireGuard, Tailscale, or any non-loopback NIC). Server detection now queries the OS kernel LISTEN-state table directly — no TCP self-connection needed.
