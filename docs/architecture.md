@@ -21,16 +21,30 @@ Symmetric mirror keeps each script idiomatic in its own language while preservin
 
 `~/.config/even-terminal/config.json` (same path on every platform) is the single source of truth. Scripts read it at runtime; nothing else (no `.env` loading, no shell exports). The `executable` field stores the absolute path resolved at install time — service contexts often have a reduced `PATH` that does not include fnm/nvm shims, so deferring resolution to start time is unreliable.
 
-## Already-running detection: TCP + HTTP probe
+## Already-running detection: OS LISTEN-state probe
 
-`scripts/lib/probe-server.{ps1,sh}` checks both:
+`scripts/lib/probe-server.{ps1,sh}` queries the OS TCP stack directly:
 
-1. TCP connect to each candidate IPv4 address — `127.0.0.1` plus all non-loopback, non-APIPA addresses on the host — at `<port>` (cheap liveness check). Succeeds as soon as any candidate passes both TCP and HTTP checks.
-2. HTTP `GET /` and accept `200`, `401`, or `404` as evidence that an HTTP server is present.
+- **Windows (PS 4+):** `Get-NetTCPConnection -LocalPort <port> -State Listen`
+- **Linux:** `ss -4tln`
+- **macOS / fallback:** `netstat -an`
 
-TCP alone has too many false positives — any process holding the port would suppress restart. The HTTP step filters out non-HTTP listeners. The acceptable-status set tolerates routing changes inside even-terminal (auth-required endpoints return 401, missing routes return 404; both are valid "HTTP server is alive" signals).
+No network round-trip is needed — this is routing-exempt and works regardless of which IP
+the server bound to. NordVPN Meshnet and WireGuard virtual NICs block self-connections
+(TCP from host to its own VPN IP); the old IP-enumeration approach timed out on every
+VPN address and exhausted the 30s startup window.
 
-The probe can still match an unrelated HTTP server on the same port. The trade-off is acceptable because a port conflict is a user-visible misconfiguration that surfaces in install logs (warning: "server did not start within 30s") and the start-script skip message. On Windows, the probe timeout is non-fatal — Task Scheduler registration is the primary success condition; the Connect URL is still printed so the user can verify connectivity independently.
+After a LISTEN entry is found, an HTTP `GET /` is attempted against the first bound IP
+(or `127.0.0.1` for `0.0.0.0`/wildcard binds) as a best-effort check. `200`, `401`, and
+`404` are accepted as valid HTTP-server signals. If HTTP fails (e.g. VPN blocks the
+loopback-to-VPN-IP connection), the LISTEN state alone is treated as a successful probe.
+
+Trade-off: a non-even-terminal process holding port 3456 would also satisfy the probe —
+the installer would proceed as if the server started successfully and print a Connect URL
+pointing at the wrong process. This is accepted because port 3456 is even-terminal's
+dedicated port; a conflict is a user-visible misconfiguration detected when the Connect
+URL fails to open the expected terminal session.
+
 
 ## Tailscale vs LAN: `--tailscale` flag vs `--interface`
 
