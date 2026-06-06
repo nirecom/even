@@ -88,15 +88,14 @@ Start-Process powershell.exe `
     -WindowStyle Hidden
 
 . "$PSScriptRoot\scripts\lib\probe-server.ps1"
-$deadline = (Get-Date).AddSeconds(15)
+$deadline = (Get-Date).AddSeconds(30)
 $started  = $false
 while ((Get-Date) -lt $deadline) {
     if (Test-EvenTerminalRunning -Port $cfgPort -TimeoutMs 200) { $started = $true; break }
     Start-Sleep -Milliseconds 500
 }
 if (-not $started) {
-    Write-Warning "Server did not start within 15s. Check: $ConfigDir\logs\stdout.log"
-    exit 1
+    Write-Warning "Server did not start within 30s. Check: $ConfigDir\logs\stdout.log"
 }
 
 $ip = $null

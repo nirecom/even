@@ -248,3 +248,42 @@ Describe "uninstall.ps1" {
         (Test-Path $bakPath) | Should -BeTrue
     }
 }
+
+Describe "install.ps1 probe timeout behavior" {
+    BeforeAll {
+        if (Test-Path $script:InstallPs1) {
+            $script:ProbeSrc = Get-Content -Raw $script:InstallPs1
+        } else {
+            $script:ProbeSrc = $null
+        }
+    }
+
+    It "probe deadline is 30 seconds (not 15)" {
+        if (-not $script:ProbeSrc) {
+            Set-ItResult -Skipped -Because "install.ps1 not yet implemented"
+            return
+        }
+        ($script:ProbeSrc -match 'AddSeconds\(30\)') | Should -BeTrue
+    }
+
+    It "warning message references 30 seconds" {
+        if (-not $script:ProbeSrc) {
+            Set-ItResult -Skipped -Because "install.ps1 not yet implemented"
+            return
+        }
+        ($script:ProbeSrc -match 'did not start within 30s') | Should -BeTrue
+    }
+
+    It "probe timeout block does not call exit 1" {
+        if (-not $script:ProbeSrc) {
+            Set-ItResult -Skipped -Because "install.ps1 not yet implemented"
+            return
+        }
+        # Extract the if (-not $started) { ... } block using a regex that captures
+        # the braced body after the condition.
+        $blockMatch = [regex]::Match($script:ProbeSrc, 'if\s*\(\s*-not\s+\$started\s*\)\s*\{([^}]*)\}')
+        $blockMatch.Success | Should -BeTrue -Because "the if (-not `$started) block must exist in install.ps1"
+        $blockBody = $blockMatch.Groups[1].Value
+        ($blockBody -match 'exit\s+1') | Should -BeFalse
+    }
+}
