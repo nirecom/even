@@ -15,3 +15,7 @@ Changes: Fixed Windows startup failure when Node is managed by fnm: `install.ps1
 ### FEATURE: PR #5 (2026-06-06)
 Background: fix: store node.exe+cli.js paths directly to survive Task Scheduler context
 Changes: Fixed: even-terminal now starts reliably at login on Windows — the installer stores the permanent node.exe path instead of a session-temporary fnm shim, so Task Scheduler can launch it without fnm on PATH
+
+### FEATURE: PR #7 (2026-06-06)
+Background: fix: increase install.ps1 probe timeout to 30s and make it non-fatal
+Changes: Fixed: `install.ps1 -Force` no longer exits with "Server did not start within 15s" when Node cold-start exceeds the old deadline. Probe timeout extended to 30s and made non-fatal — the Connect URL is now always printed after install.
