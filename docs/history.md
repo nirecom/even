@@ -15,3 +15,7 @@ Changes: BUGFIX: fix fnm multishell shim path so even-terminal starts under Task
 ### FEATURE: PR #7 — fix/probe-timeout (2026-06-06, b5214a99c490e9a4d7ac2b922063b40c4500491c, #7)
 Background: fix: increase install.ps1 probe timeout to 30s and make it non-fatal
 Changes: fix(install.ps1): increase probe timeout from 15s to 30s and make it non-fatal — Get-NetworkArgs + Node cold-start regularly exceeded the 15s deadline; Task Scheduler registration succeeds regardless, so timeout is now a warning-only; Connect URL always printed (#6) <!-- compose-doc-append-sentinel: branch=fix/probe-timeout pr=#7 -->
+
+### BUGFIX: PR #9 — fix/issue-8-probe (2026-06-06, e350702, #9)
+Background: fix: probe all candidate IPv4 addresses to fix VPN-caused timeout (#8)
+Changes: category: BUGFIX <!-- compose-doc-append-sentinel: branch=fix/issue-8-probe pr=#9 -->

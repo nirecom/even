@@ -19,3 +19,7 @@ Changes: Fixed: even-terminal now starts reliably at login on Windows — the in
 ### FEATURE: PR #7 (2026-06-06)
 Background: fix: increase install.ps1 probe timeout to 30s and make it non-fatal
 Changes: Fixed: `install.ps1 -Force` no longer exits with "Server did not start within 15s" when Node cold-start exceeds the old deadline. Probe timeout extended to 30s and made non-fatal — the Connect URL is now always printed after install.
+
+### BUGFIX: PR #9 (2026-06-06)
+Background: fix: probe all candidate IPv4 addresses to fix VPN-caused timeout (#8)
+Changes: Fixed: `install.ps1 -Force` no longer shows "WARNING: Server did not start within 30s" when a VPN (NordVPN, etc.) is active. The probe now checks all local IPv4 addresses — `127.0.0.1` plus any VPN/LAN interfaces — so even-terminal is found regardless of which network interface it binds to.
