@@ -25,7 +25,7 @@ Symmetric mirror keeps each script idiomatic in its own language while preservin
 
 `scripts/lib/probe-server.{ps1,sh}` checks both:
 
-1. TCP connect to `127.0.0.1:<port>` (cheap liveness check).
+1. TCP connect to each candidate IPv4 address — `127.0.0.1` plus all non-loopback, non-APIPA addresses on the host — at `<port>` (cheap liveness check). Succeeds as soon as any candidate passes both TCP and HTTP checks.
 2. HTTP `GET /` and accept `200`, `401`, or `404` as evidence that an HTTP server is present.
 
 TCP alone has too many false positives — any process holding the port would suppress restart. The HTTP step filters out non-HTTP listeners. The acceptable-status set tolerates routing changes inside even-terminal (auth-required endpoints return 401, missing routes return 404; both are valid "HTTP server is alive" signals).

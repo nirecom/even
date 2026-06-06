@@ -32,7 +32,20 @@ function parsePort(args) {
   return 3456;
 }
 
+function parseBind(args) {
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--bind' && i + 1 < args.length) {
+      return args[i + 1];
+    }
+    if (args[i].startsWith('--bind=')) {
+      return args[i].split('=', 2)[1];
+    }
+  }
+  return '127.0.0.1';
+}
+
 const port = parsePort(argv);
+const bindIp = parseBind(argv);
 
 const server = http.createServer((req, res) => {
   if (req.method === 'GET' && (req.url === '/' || req.url === '')) {
@@ -49,8 +62,8 @@ server.on('error', (err) => {
   process.exit(2);
 });
 
-server.listen(port, '127.0.0.1', () => {
-  console.log('READY port=' + port);
+server.listen(port, bindIp, () => {
+  console.log('READY port=' + port + ' bind=' + bindIp);
 });
 
 function shutdown() {
