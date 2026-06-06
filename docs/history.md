@@ -18,4 +18,4 @@ Changes: fix(install.ps1): increase probe timeout from 15s to 30s and make it no
 
 ### BUGFIX: PR #9 — fix/issue-8-probe (2026-06-06, e350702, #9)
 Background: fix: probe all candidate IPv4 addresses to fix VPN-caused timeout (#8)
-Changes: category: BUGFIX <!-- compose-doc-append-sentinel: branch=fix/issue-8-probe pr=#9 -->
+Changes: Both probe functions now enumerate 127.0.0.1 plus all non-loopback, non-APIPA IPv4 addresses on the host (PS: Get-NetIPAddress -AddressFamily IPv4; bash: ip addr / ifconfig fallback), probe each candidate with TCP+HTTP, and short-circuit on first success. Call sites (install.ps1, start.ps1, start.sh) unchanged. architecture.md updated; Pester and bats tests added. <!-- compose-doc-append-sentinel: branch=fix/issue-8-probe pr=#9 -->
