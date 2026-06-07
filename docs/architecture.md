@@ -46,16 +46,22 @@ dedicated port; a conflict is a user-visible misconfiguration detected when the 
 URL fails to open the expected terminal session.
 
 
-## Tailscale vs LAN: `--tailscale` flag vs `--interface`
+## Network bind: wildcard + per-NIC URL enumeration
 
-`even-terminal` accepts `--tailscale` (auto-detects the Tailscale IP) or `--interface <NIC name>` (binds to a specific adapter). These are mutually exclusive.
+`even-terminal` is started with no `--interface` flag in `auto` / `loopback` / `lan` modes, so it binds to `0.0.0.0` (all NICs). This means LAN, NordVPN Meshnet (NordLynx), and Tailscale all work simultaneously — no restart needed when switching networks.
 
-The `auto` mode (default) re-evaluates at each start:
+`--tailscale` is still passed in `tailscale` mode (the explicit opt-in). All other `network_mode` values omit `--interface`.
 
-- If a Tailscale adapter is up → use `--tailscale`.
-- Otherwise → detect the primary LAN NIC (lowest-metric default-gateway adapter) and pass `--interface <NIC>`.
+After the server starts, `scripts/lib/list-display-urls.{ps1,sh}` enumerates every active NIC and builds one Connect URL per address:
 
-`auto` re-evaluation matters because Tailscale daemons sometimes start after login; the start-script's re-check at each launch handles the transition automatically. Users can also pin `network_mode` to `tailscale`, `lan`, or `loopback` in `config.json`.
+- **Windows** (`Get-ConnectUrls`): primary LAN NIC (lowest-metric default-gateway adapter, excluding NordLynx/Tailscale from this primary slot), then NordLynx (NordVPN Meshnet) if the `NordLynx*` adapter is Up, then Tailscale if the `Tailscale*` adapter is Up.
+- **POSIX** (`list_connect_urls`): primary LAN via `ip route get 1.1.1.1` (Linux) or `route`/`ipconfig` (macOS), then Tailscale via `tailscale ip -4` if connected.
+
+All URLs are printed by the install script so the user can pick the one reachable from the G2. The server is already listening on all of them.
+
+Previous approach (`--interface` to the primary LAN NIC) bound the server to a single IP, so NordVPN Meshnet connections silently failed — traffic arrived on `100.x.x.x` but the server was only listening on `192.168.x.x`.
+
+`network_mode` in `config.json` is retained for `tailscale` (explicit Tailscale-only bind) and future use. Users can still pin it.
 
 ## Token delivery: `BRIDGE_TOKEN` env var, not CLI flag
 

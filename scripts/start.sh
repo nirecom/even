@@ -38,7 +38,8 @@ export PORT
 ARGS=(--provider "$PROVIDER" --port "$PORT")
 case "$NET_MODE" in
     tailscale) ARGS+=(--tailscale) ;;
-    interface) ARGS+=(--interface "$NET_ARG") ;;
+    # auto/loopback/interface: no --interface; even-terminal binds 0.0.0.0
+    # and accepts connections from all NICs.
 esac
 
 mkdir -p "$CONFIG_DIR/logs"

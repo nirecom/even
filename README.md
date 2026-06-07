@@ -6,7 +6,8 @@ Auto-start [`@evenrealities/even-terminal`](https://www.npmjs.com/package/@evenr
 
 - Generates a fixed bridge token on first install (saved to `~/.config/even-terminal/config.json`).
 - Registers an autostart entry that launches `even-terminal --provider claude` on login.
-- Detects Tailscale at startup; falls back to the primary LAN interface when Tailscale is not available.
+- Binds to all network interfaces (wildcard `0.0.0.0`) so LAN, NordVPN Meshnet, and Tailscale connections all work simultaneously.
+- Displays a Connect URL for every active NIC after install — primary LAN, NordVPN Meshnet (NordLynx), and Tailscale listed separately so you can pick the one reachable from your G2.
 - Provides idempotent install / uninstall scripts symmetric across Windows and POSIX.
 
 ## Prerequisites
@@ -91,7 +92,7 @@ A `.bak` of the previous config is left next to the removed file.
 - **launchd cannot find Node**: launchd starts with a minimal `PATH`. The install script writes an `EnvironmentVariables` block, but if your `even-terminal` is under fnm/nvm, you may need to use a shim or wrap the launchd `ProgramArguments` accordingly.
 - **systemd service stops at logoff**: enable lingering with `sudo loginctl enable-linger $USER`.
 - **Port already in use**: the start script detects an HTTP server on the configured port and skips startup. Edit `config.json` to use a different port, then restart the service.
-- **G2 cannot connect**: confirm the Connect URL's IP is reachable from G2 (use the Tailscale IP for cross-network access). Re-run `install.ps1`/`install.sh` to re-print the URL.
+- **G2 cannot connect**: after install, the script prints one URL per active NIC (LAN, NordVPN Meshnet, Tailscale). Try each URL — use the Meshnet or Tailscale URL for cross-network access. Re-run `install.ps1`/`install.sh` to re-print all URLs.
 
 ## Architecture
 

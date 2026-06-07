@@ -88,24 +88,27 @@ Start-Process powershell.exe `
     -WindowStyle Hidden
 
 . "$PSScriptRoot\scripts\lib\probe-server.ps1"
-. "$PSScriptRoot\scripts\lib\resolve-display-ip.ps1"
+. "$PSScriptRoot\scripts\lib\list-display-urls.ps1"
 $deadline = (Get-Date).AddSeconds(30)
 $started  = $false
-$probeResult = $null
 while ((Get-Date) -lt $deadline) {
-    $probeResult = Test-EvenTerminalRunning -Port $cfgPort -TimeoutMs 200
-    if ($probeResult.Running) { $started = $true; break }
+    if ((Test-EvenTerminalRunning -Port $cfgPort -TimeoutMs 200).Running) { $started = $true; break }
     Start-Sleep -Milliseconds 500
 }
 if (-not $started) {
     Write-Warning "Server did not start within 30s. Check: $ConfigDir\logs\stdout.log"
 }
 
-$boundIp = if ($started -and $probeResult) { $probeResult.BoundIP } else { $null }
-$url = Get-ConnectUrl -BoundIP $boundIp -Port $cfgPort -Token $cfgToken
+$connectUrls = Get-ConnectUrls -Port $cfgPort -Token $cfgToken
 Write-Host ""
 Write-Host "=== Installation complete ==="
-Write-Host "  Connect URL : $url"
+if ($connectUrls.Count -gt 0) {
+    foreach ($entry in $connectUrls) {
+        Write-Host "  Connect URL ($($entry['Label'])) : $($entry['Url'])"
+    }
+} else {
+    Write-Host "  Connect URL : http://<your-ip>:$($cfgPort)?token=$cfgToken"
+}
 Write-Host "  Log         : $ConfigDir\logs\stdout.log"
 Write-Host ""
 Write-Host "Open Even Hub on your G2 and scan the QR code shown in the server log,"
