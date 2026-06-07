@@ -88,6 +88,7 @@ Start-Process powershell.exe `
     -WindowStyle Hidden
 
 . "$PSScriptRoot\scripts\lib\probe-server.ps1"
+. "$PSScriptRoot\scripts\lib\resolve-display-ip.ps1"
 $deadline = (Get-Date).AddSeconds(30)
 $started  = $false
 $probeResult = $null
@@ -100,11 +101,11 @@ if (-not $started) {
     Write-Warning "Server did not start within 30s. Check: $ConfigDir\logs\stdout.log"
 }
 
-$ip = if ($started -and $probeResult) { $probeResult.BoundIP } else { $null }
-if (-not $ip -or $ip -in @('0.0.0.0', '::', '::1')) { $ip = '<your-ip>' }
+$boundIp = if ($started -and $probeResult) { $probeResult.BoundIP } else { $null }
+$url = Get-ConnectUrl -BoundIP $boundIp -Port $cfgPort -Token $cfgToken
 Write-Host ""
 Write-Host "=== Installation complete ==="
-Write-Host "  Connect URL : http://$($ip):$($cfgPort)?token=$cfgToken"
+Write-Host "  Connect URL : $url"
 Write-Host "  Log         : $ConfigDir\logs\stdout.log"
 Write-Host ""
 Write-Host "Open Even Hub on your G2 and scan the QR code shown in the server log,"

@@ -132,6 +132,7 @@ EOF2
 esac
 
 . "$REPO_ROOT/scripts/lib/probe-server.sh"
+. "$REPO_ROOT/scripts/lib/resolve-display-ip.sh"
 P=$(python3 -c "import json; print(json.load(open('$CONFIG_PATH'))['port'])")
 TOKEN_VAL=$(python3 -c "import json; print(json.load(open('$CONFIG_PATH'))['token'])")
 STARTED=0
@@ -145,12 +146,11 @@ if [ "$STARTED" -ne 1 ]; then
     exit 1
 fi
 
-IP="$BOUND_IP"
-case "$IP" in 0.0.0.0|::|"") IP="<your-ip>" ;; esac
+URL=$(build_connect_url "$BOUND_IP" "$P" "$TOKEN_VAL")
 
 echo ""
 echo "=== Installation complete ==="
-echo "  Connect URL : http://${IP:-<your-ip>}:${P}?token=${TOKEN_VAL}"
+echo "  Connect URL : $URL"
 echo "  Log         : $LOG_DIR/stdout.log"
 echo ""
 echo "Open Even Hub on your G2 and scan the QR code shown in the server log,"
