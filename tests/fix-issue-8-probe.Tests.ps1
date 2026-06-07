@@ -59,9 +59,11 @@ BeforeAll {
 Describe "Test-EvenTerminalRunning (probe-server.ps1 — LISTEN-state)" {
 
     Context "nothing listening" {
-        It "returns false when nothing is listening on a closed port" {
+        It "returns Running=false and BoundIP=null when nothing is listening on a closed port" {
             $closedPort = 34575
-            Test-EvenTerminalRunning -Port $closedPort | Should -BeFalse
+            $result = Test-EvenTerminalRunning -Port $closedPort
+            $result.Running | Should -BeFalse
+            $result.BoundIP | Should -BeNullOrEmpty
         }
     }
 
@@ -72,13 +74,15 @@ Describe "Test-EvenTerminalRunning (probe-server.ps1 — LISTEN-state)" {
         }
         AfterAll { Stop-FakeServer $script:Proc1 }
 
-        It "returns true when fake server listens on 127.0.0.1" {
+        It "returns Running=true and BoundIP=127.0.0.1 when fake server listens on 127.0.0.1" {
             if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
                 Set-ItResult -Skipped -Because "node not available"
                 return
             }
             $script:Proc1 = Start-FakeServer -Port $script:Port1
-            Test-EvenTerminalRunning -Port $script:Port1 | Should -BeTrue
+            $result = Test-EvenTerminalRunning -Port $script:Port1
+            $result.Running | Should -BeTrue
+            $result.BoundIP | Should -Be '127.0.0.1'
         }
     }
 
@@ -90,7 +94,7 @@ Describe "Test-EvenTerminalRunning (probe-server.ps1 — LISTEN-state)" {
         }
         AfterAll { Stop-FakeServer $script:Proc2 }
 
-        It "returns true when fake server binds to a non-loopback IPv4" {
+        It "returns Running=true and BoundIP equal to the non-loopback IPv4 when fake server binds to a non-loopback IPv4" {
             if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
                 Set-ItResult -Skipped -Because "node not available"
                 return
@@ -100,7 +104,9 @@ Describe "Test-EvenTerminalRunning (probe-server.ps1 — LISTEN-state)" {
                 return
             }
             $script:Proc2 = Start-FakeServer -Port $script:Port2 -Bind $script:NonLB
-            Test-EvenTerminalRunning -Port $script:Port2 | Should -BeTrue
+            $result = Test-EvenTerminalRunning -Port $script:Port2
+            $result.Running | Should -BeTrue
+            $result.BoundIP | Should -Be $script:NonLB
         }
     }
 
@@ -111,9 +117,11 @@ Describe "Test-EvenTerminalRunning (probe-server.ps1 — LISTEN-state)" {
         }
         AfterAll { Stop-TcpListener $script:Listener }
 
-        It "returns true when a non-HTTP TCP listener occupies the port" {
+        It "returns Running=true and BoundIP=127.0.0.1 when a non-HTTP TCP listener occupies the port" {
             $script:Listener = Start-TcpListener -Port $script:Port3
-            Test-EvenTerminalRunning -Port $script:Port3 | Should -BeTrue
+            $result = Test-EvenTerminalRunning -Port $script:Port3
+            $result.Running | Should -BeTrue
+            $result.BoundIP | Should -Be '127.0.0.1'
         }
     }
 
@@ -123,7 +131,7 @@ Describe "Test-EvenTerminalRunning (probe-server.ps1 — LISTEN-state)" {
             $sw = [System.Diagnostics.Stopwatch]::StartNew()
             $result = Test-EvenTerminalRunning -Port $closedPort
             $sw.Stop()
-            $result | Should -BeFalse
+            $result.Running | Should -BeFalse
             $sw.Elapsed.TotalMilliseconds | Should -BeLessThan 2000
         }
     }

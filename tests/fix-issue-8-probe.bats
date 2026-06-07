@@ -52,14 +52,15 @@ find_non_loopback_ipv4() {
     printf '%s' "$ip"
 }
 
-@test "probe_server returns 1 when nothing is listening" {
+@test "probe_server returns 1 and no stdout when nothing is listening" {
     [ -n "$LISTEN_TOOL" ] || skip "no ss or netstat available"
     port=34571
     run probe_server "$port"
     [ "$status" -eq 1 ]
+    [ -z "$output" ]
 }
 
-@test "probe_server returns 0 when fake server listens on loopback" {
+@test "probe_server returns 0 and stdout=127.0.0.1 when fake server listens on loopback" {
     [ -n "$LISTEN_TOOL" ] || skip "no ss or netstat available"
     command -v node >/dev/null 2>&1 || skip "node not available"
     port=34572
@@ -68,9 +69,10 @@ find_non_loopback_ipv4() {
     sleep 2
     run probe_server "$port"
     [ "$status" -eq 0 ]
+    [ "$output" = "127.0.0.1" ]
 }
 
-@test "probe_server returns 0 when fake server binds to non-loopback IPv4" {
+@test "probe_server returns 0 and stdout=\$ip when fake server binds to non-loopback IPv4" {
     [ -n "$LISTEN_TOOL" ] || skip "no ss or netstat available"
     command -v node >/dev/null 2>&1 || skip "node not available"
     ip="$(find_non_loopback_ipv4)"
@@ -81,9 +83,10 @@ find_non_loopback_ipv4() {
     sleep 2
     run probe_server "$port"
     [ "$status" -eq 0 ]
+    [ "$output" = "$ip" ]
 }
 
-@test "probe_server returns 0 with raw TCP listener (LISTEN-only, no HTTP)" {
+@test "probe_server returns 0 with non-empty stdout for raw TCP listener (LISTEN-only, no HTTP)" {
     [ -n "$LISTEN_TOOL" ] || skip "no ss or netstat available"
     command -v nc >/dev/null 2>&1 || skip "nc not available for raw TCP listener"
     port=34574
@@ -92,9 +95,10 @@ find_non_loopback_ipv4() {
     sleep 1
     run probe_server "$port"
     [ "$status" -eq 0 ]
+    [ -n "$output" ]
 }
 
-@test "probe_server legacy fallback returns 0 when netstat absent but nc available" {
+@test "probe_server legacy fallback returns 0 and empty stdout when netstat absent but nc available" {
     command -v ss >/dev/null 2>&1 && skip "ss present; LISTEN-state path used instead"
     command -v netstat >/dev/null 2>&1 && skip "netstat present; netstat path used instead"
     command -v nc >/dev/null 2>&1 || skip "nc not available for legacy fallback test"
@@ -105,4 +109,5 @@ find_non_loopback_ipv4() {
     sleep 2
     run probe_server "$port"
     [ "$status" -eq 0 ]
+    [ -z "$output" ]
 }

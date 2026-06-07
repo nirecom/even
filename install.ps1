@@ -90,25 +90,18 @@ Start-Process powershell.exe `
 . "$PSScriptRoot\scripts\lib\probe-server.ps1"
 $deadline = (Get-Date).AddSeconds(30)
 $started  = $false
+$probeResult = $null
 while ((Get-Date) -lt $deadline) {
-    if (Test-EvenTerminalRunning -Port $cfgPort -TimeoutMs 200) { $started = $true; break }
+    $probeResult = Test-EvenTerminalRunning -Port $cfgPort -TimeoutMs 200
+    if ($probeResult.Running) { $started = $true; break }
     Start-Sleep -Milliseconds 500
 }
 if (-not $started) {
     Write-Warning "Server did not start within 30s. Check: $ConfigDir\logs\stdout.log"
 }
 
-$ip = $null
-if (Get-Command tailscale -ErrorAction SilentlyContinue) {
-    $ip = & tailscale ip -4 2>$null | Select-Object -First 1
-}
-if (-not $ip) {
-    $ip = (Get-NetIPAddress -AddressFamily IPv4 |
-           Where-Object { $_.IPAddress -notlike '127.*' -and
-                          $_.IPAddress -notlike '169.254.*' -and
-                          $_.PrefixOrigin -ne 'WellKnown' } |
-           Select-Object -First 1).IPAddress
-}
+$ip = if ($started -and $probeResult) { $probeResult.BoundIP } else { $null }
+if (-not $ip -or $ip -in @('0.0.0.0', '::', '::1')) { $ip = '<your-ip>' }
 Write-Host ""
 Write-Host "=== Installation complete ==="
 Write-Host "  Connect URL : http://$($ip):$($cfgPort)?token=$cfgToken"

@@ -17,7 +17,7 @@ if (-not (Test-Path $ConfigPath)) {
 }
 $config = Get-Content $ConfigPath -Raw | ConvertFrom-Json
 
-if (Test-EvenTerminalRunning -Port $config.port) {
+if ((Test-EvenTerminalRunning -Port $config.port).Running) {
     Write-Host "even-terminal already responding on port $($config.port); skipping."
     exit 0
 }

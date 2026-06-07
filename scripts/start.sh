@@ -18,7 +18,7 @@ PORT=$(read_config "$CONFIG_PATH" port)
 PROVIDER=$(read_config "$CONFIG_PATH" provider)
 NETWORK_MODE=$(read_config "$CONFIG_PATH" network_mode)
 
-if probe_server "$PORT"; then
+if probe_server "$PORT" >/dev/null; then
     echo "even-terminal already responding on port $PORT; skipping."
     exit 0
 fi
