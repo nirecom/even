@@ -27,3 +27,7 @@ Changes: Fixed: `install.ps1 -Force` no longer shows "WARNING: Server did not st
 ### FEATURE: PR #11 (2026-06-07)
 Background: fix: detect server via LISTEN-state to handle any NIC/VPN binding
 Changes: Fixed: `install.ps1 -Force` no longer reports "Server did not start within 30s" when `even-terminal` is bound to a VPN IP (NordVPN Meshnet, WireGuard, Tailscale, or any non-loopback NIC). Server detection now queries the OS kernel LISTEN-state table directly — no TCP self-connection needed.
+
+### FEATURE: PR #13 (2026-06-08)
+Background: fix: display Connect URL using server's actual bound IP (#12)
+Changes: Fixed: Connect URL printed by `install.ps1`/`install.sh` now shows the same IP as the QR code in the server log. Previously the URL used the Tailscale IP while the QR code showed the actual LAN bind IP, causing a mismatch under NordVPN Meshnet (NordLynx adapter) and any setup where even-terminal binds to a different interface than Tailscale.
