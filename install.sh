@@ -135,8 +135,9 @@ esac
 P=$(python3 -c "import json; print(json.load(open('$CONFIG_PATH'))['port'])")
 TOKEN_VAL=$(python3 -c "import json; print(json.load(open('$CONFIG_PATH'))['token'])")
 STARTED=0
+BOUND_IP=""
 for _ in $(seq 1 30); do
-    if probe_server "$P"; then STARTED=1; break; fi
+    if BOUND_IP=$(probe_server "$P"); then STARTED=1; break; fi
     sleep 0.5
 done
 if [ "$STARTED" -ne 1 ]; then
@@ -144,22 +145,8 @@ if [ "$STARTED" -ne 1 ]; then
     exit 1
 fi
 
-IP=""
-if command -v tailscale >/dev/null 2>&1 && tailscale status >/dev/null 2>&1; then
-    IP=$(tailscale ip -4 2>/dev/null | head -1 || true)
-fi
-if [ -z "$IP" ]; then
-    case "$UNAME" in
-        Darwin)
-            IP=$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || true) ;;
-        Linux)
-            if command -v ip >/dev/null 2>&1; then
-                IP=$(ip -4 -o addr show scope global | awk '{print $4}' | cut -d/ -f1 | head -1)
-            else
-                IP=$(hostname -I 2>/dev/null | awk '{print $1}')
-            fi ;;
-    esac
-fi
+IP="$BOUND_IP"
+case "$IP" in 0.0.0.0|::|"") IP="<your-ip>" ;; esac
 
 echo ""
 echo "=== Installation complete ==="

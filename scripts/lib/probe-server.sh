@@ -32,12 +32,14 @@ probe_server() {
     code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 2 \
         "http://$http_ip:$port/" 2>/dev/null || echo 000)
     case "$code" in
-        200|401|404) return 0 ;;
+        200|401|404) printf '%s\n' "$bound_ip"; return 0 ;;
     esac
 
+    printf '%s\n' "$bound_ip"
     return 0
 }
 
+# legacy path: no LISTEN-state IP available; callers receive empty stdout
 _probe_server_legacy() {
     local port="$1"
     case "$port" in ''|*[!0-9]*) return 1 ;; esac
