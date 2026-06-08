@@ -132,13 +132,12 @@ EOF2
 esac
 
 . "$REPO_ROOT/scripts/lib/probe-server.sh"
-. "$REPO_ROOT/scripts/lib/resolve-display-ip.sh"
+. "$REPO_ROOT/scripts/lib/list-display-urls.sh"
 P=$(python3 -c "import json; print(json.load(open('$CONFIG_PATH'))['port'])")
 TOKEN_VAL=$(python3 -c "import json; print(json.load(open('$CONFIG_PATH'))['token'])")
 STARTED=0
-BOUND_IP=""
 for _ in $(seq 1 30); do
-    if BOUND_IP=$(probe_server "$P"); then STARTED=1; break; fi
+    if probe_server "$P" >/dev/null; then STARTED=1; break; fi
     sleep 0.5
 done
 if [ "$STARTED" -ne 1 ]; then
@@ -146,12 +145,30 @@ if [ "$STARTED" -ne 1 ]; then
     exit 1
 fi
 
-URL=$(build_connect_url "$BOUND_IP" "$P" "$TOKEN_VAL")
+# Resolve qrcode-terminal bundled with even-terminal (no extra install needed)
+QR_MODULE=""
+NPM_ROOT=$(npm root -g 2>/dev/null || true)
+if [ -n "$NPM_ROOT" ]; then
+    _candidate="$NPM_ROOT/@evenrealities/even-terminal/node_modules/qrcode-terminal"
+    [ -d "$_candidate" ] && QR_MODULE="$_candidate"
+fi
 
 echo ""
 echo "=== Installation complete ==="
-echo "  Connect URL : $URL"
-echo "  Log         : $LOG_DIR/stdout.log"
+FOUND_URL=0
+while IFS=' ' read -r label ip url; do
+    echo ""
+    echo "  Connect URL ($label) : $url"
+    if [ -n "$QR_MODULE" ]; then
+        node -e "require('$QR_MODULE').generate('$url',{small:true},(c)=>process.stdout.write(c+'\n'))" 2>/dev/null || true
+    fi
+    FOUND_URL=1
+done < <(list_connect_urls "$P" "$TOKEN_VAL")
+if [ "$FOUND_URL" -eq 0 ]; then
+    echo "  Connect URL : http://<your-ip>:${P}?token=${TOKEN_VAL}"
+fi
 echo ""
-echo "Open Even Hub on your G2 and scan the QR code shown in the server log,"
+echo "  Log : $LOG_DIR/stdout.log"
+echo ""
+echo "Open Even Hub on your G2 and scan a QR code above,"
 echo "or paste the Connect URL directly into Even Hub."

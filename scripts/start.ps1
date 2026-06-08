@@ -39,9 +39,11 @@ if ($config.executable_args) { $exeArgs += $config.executable_args }
 $exeArgs += @('--provider', $config.provider, '--port', $config.port)
 if ($net.mode -eq 'tailscale') {
     $exeArgs += '--tailscale'
-} elseif ($net.mode -eq 'interface') {
-    $exeArgs += @('--interface', $net.arg)
 }
+# auto/loopback/interface modes: no --interface flag.
+# even-terminal binds to 0.0.0.0 and accepts connections from all NICs
+# (LAN + NordVPN Meshnet + Tailscale). install.ps1 displays URLs for each
+# active NIC via Get-ConnectUrls so the user can pick the right one.
 
 $logDir = Join-Path $ConfigDir 'logs'
 New-Item -ItemType Directory -Path $logDir -Force | Out-Null
