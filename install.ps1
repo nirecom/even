@@ -100,16 +100,31 @@ if (-not $started) {
 }
 
 $connectUrls = Get-ConnectUrls -Port $cfgPort -Token $cfgToken
+
+# Resolve qrcode-terminal bundled with even-terminal (no extra install needed)
+$npmRoot = (& node -e "try{const g=require('child_process').execSync('npm root -g').toString().trim();console.log(g)}catch(e){}" 2>$null)
+$qrModPath = if ($npmRoot) {
+    $p = Join-Path $npmRoot.Trim() '@evenrealities\even-terminal\node_modules\qrcode-terminal'
+    if (Test-Path $p) { $p } else { $null }
+} else { $null }
+
 Write-Host ""
 Write-Host "=== Installation complete ==="
 if ($connectUrls.Count -gt 0) {
     foreach ($entry in $connectUrls) {
+        Write-Host ""
         Write-Host "  Connect URL ($($entry['Label'])) : $($entry['Url'])"
+        if ($qrModPath) {
+            $url  = $entry['Url']
+            $mEsc = $qrModPath -replace '\\', '\\\\'
+            & node -e "require('$mEsc').generate('$url',{small:true},(c)=>process.stdout.write(c+'\n'))"
+        }
     }
 } else {
     Write-Host "  Connect URL : http://<your-ip>:$($cfgPort)?token=$cfgToken"
 }
-Write-Host "  Log         : $ConfigDir\logs\stdout.log"
 Write-Host ""
-Write-Host "Open Even Hub on your G2 and scan the QR code shown in the server log,"
+Write-Host "  Log : $ConfigDir\logs\stdout.log"
+Write-Host ""
+Write-Host "Open Even Hub on your G2 and scan a QR code above,"
 Write-Host "or paste the Connect URL directly into Even Hub."
